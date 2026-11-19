@@ -13,13 +13,14 @@ Kullanım:
     python trendyol_firsat.py          -> normal tarama
     python trendyol_firsat.py --test   -> sadece Telegram test mesajı gönderir
 
-Not: Trendyol'un resmi bir API'si yoktur. Bu betik sitenin kendi arama
-servisini kullanır; Trendyol bu servisi değiştirirse betik veri alamaz ve
-size Telegram'dan uyarı gönderir.
+Not: Trendyol'un resmi bir API'si yoktur. Bu betik kategori sayfasının
+içindeki ürün verisini okur; Trendyol sayfa yapısını değiştirirse betik veri
+alamaz ve size Telegram'dan uyarı gönderir.
 """
 
 import html
 import json
+import re
 import os
 import random
 import statistics
@@ -35,25 +36,20 @@ GECMIS_DOSYASI = "veri/fiyat_gecmisi.json"
 DURUM_DOSYASI = "veri/durum.json"
 TR_SAATI = timezone(timedelta(hours=3))
 
-API_ADRESI = (
-    "https://public.trendyol.com/discovery-web-searchgw-service/"
-    "v2/api/infinite-scroll/{yol}"
-)
 SITE = "https://www.trendyol.com"
+VERI_ANAHTARI = re.compile(r'window\["__single-search-result__PROPS"\]\s*=\s*')
 BASLIKLAR = {
     "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/131.0 Safari/537.36"
     ),
-    "Accept": "application/json, text/plain, */*",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "tr-TR,tr;q=0.9",
-    "Origin": SITE,
-    "Referer": SITE + "/",
 }
 
 VARSAYILAN_AYARLAR = {
     "kategoriler": [],
-    "sayfa_sayisi": 15,
+    "sayfa_sayisi": 10,
     "indirim_esigi": 50,
     "min_gecmis_gun": 3,
     "gecmis_gun": 30,
@@ -150,24 +146,47 @@ def telegram_gonder(metin, onizleme=False):
 
 # ---------------------------------------------------------------------- tarama
 
+def sayfadan_veri(metin):
+    """Kategori sayfasının HTML'indeki ürün verisini (JSON) çıkarır."""
+    m = VERI_ANAHTARI.search(metin or "")
+    if not m:
+        return None
+    bas = m.end()
+    son = metin.find("</script>", bas)
+    parca = metin[bas:son if son > 0 else None].strip().rstrip(";")
+    try:
+        return json.loads(parca)
+    except ValueError:
+        try:  # sonda fazladan kod varsa ilk JSON nesnesini al
+            return json.JSONDecoder().raw_decode(parca)[0]
+        except ValueError:
+            return None
+
+
 def sayfa_getir(oturum, yol, parametreler, sayfa):
     params = dict(parametreler)
-    params.update({"pi": sayfa, "culture": "tr-TR"})
-    adres = API_ADRESI.format(yol=yol)
+    params["pi"] = sayfa
+    adres = f"{SITE}/{yol}"
     for deneme in range(3):
         try:
-            r = oturum.get(adres, params=params, timeout=25)
+            r = oturum.get(adres, params=params, timeout=30)
             if r.status_code == 200:
-                return r.json()
-            log(f"  {yol} sayfa {sayfa}: HTTP {r.status_code}")
-        except (requests.RequestException, ValueError) as e:
+                veri = sayfadan_veri(r.text)
+                if veri is not None:
+                    return veri
+                log(f"  {yol} sayfa {sayfa}: ürün verisi bulunamadı ({r.url})")
+                return None
+            log(f"  {yol} sayfa {sayfa}: HTTP {r.status_code} ({r.url})")
+            if r.status_code == 404:
+                return None
+        except requests.RequestException as e:
             log(f"  {yol} sayfa {sayfa}: {e}")
         time.sleep(4 * (deneme + 1))
     return None
 
 
 def urunleri_ayikla(veri):
-    sonuc = (veri or {}).get("result") or (veri or {}).get("data") or {}
+    sonuc = (veri or {}).get("data") or (veri or {}).get("result") or {}
     ham = sonuc.get("products") or []
     urunler = []
     for u in ham:
@@ -180,22 +199,26 @@ def urunleri_ayikla(veri):
                 fiyat_blok = {"sellingPrice": fiyat_blok}
             adaylar = [
                 sayi(fiyat_blok.get(k))
-                for k in ("discountedPrice", "sellingPrice", "price")
+                for k in ("current", "discountedPrice", "sellingPrice", "price")
             ]
             adaylar = [a for a in adaylar if a]
             if not adaylar:
                 continue
             fiyat = min(adaylar)
-            liste = sayi(fiyat_blok.get("originalPrice"))
-            if liste is not None and liste <= fiyat:
-                liste = None
+            # Üstü çizili fiyat: önce "old", yoksa "originalPrice"
+            liste = None
+            for k in ("old", "originalPrice"):
+                aday = sayi(fiyat_blok.get(k))
+                if aday and aday > fiyat:
+                    liste = aday
+                    break
 
             marka = u.get("brand")
             if isinstance(marka, dict):
                 marka = marka.get("name")
             ad = " ".join(x for x in (marka, u.get("name")) if x).strip()
 
-            url = u.get("url") or ""
+            url = (u.get("url") or "").split("?")[0]
             if url and not url.startswith("http"):
                 url = SITE + url
 
