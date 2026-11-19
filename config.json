@@ -2,16 +2,26 @@
   "kategoriler": [
     {
       "ad": "Elektronik",
-      "url": "https://www.trendyol.com/elektronik?sst=BEST_SELLER",
+      "url": "https://www.trendyol.com/elektronik-x-c104024?sst=BEST_SELLER",
       "aktif": true
     },
     {
-      "ad": "Ev & Yaşam",
-      "url": "https://www.trendyol.com/ev-ve-yasam?sst=BEST_SELLER",
+      "ad": "Ev Dekorasyon",
+      "url": "https://www.trendyol.com/ev-dekorasyon-x-c95?sst=BEST_SELLER",
+      "aktif": true
+    },
+    {
+      "ad": "Ev Tekstili",
+      "url": "https://www.trendyol.com/ev-tekstili-x-c94?sst=BEST_SELLER",
+      "aktif": true
+    },
+    {
+      "ad": "Mobilya",
+      "url": "https://www.trendyol.com/mobilya-x-c1119?sst=BEST_SELLER",
       "aktif": true
     }
   ],
-  "sayfa_sayisi": 15,
+  "sayfa_sayisi": 10,
   "indirim_esigi": 50,
   "min_gecmis_gun": 3,
   "gecmis_gun": 30,
