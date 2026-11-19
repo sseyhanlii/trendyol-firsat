@@ -26,5 +26,5 @@
   "min_gecmis_gun": 3,
   "gecmis_gun": 30,
   "min_normal_fiyat": 100,
-  "max_bildirim": 15
+  "max_bildirim": 50
 }
