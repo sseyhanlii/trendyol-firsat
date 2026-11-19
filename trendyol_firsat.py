@@ -45,6 +45,8 @@ BASLIKLAR = {
     ),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "tr-TR,tr;q=0.9",
+    # Trendyol ülkeyi bu çerezlerle hatırlıyor; yoksa yurt dışı sunucular ülke seçme sayfasına gider
+    "Cookie": "countryCode=TR; language=tr; storefrontId=1; platform=web",
 }
 
 VARSAYILAN_AYARLAR = {
