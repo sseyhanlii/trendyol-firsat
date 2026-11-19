@@ -2,7 +2,7 @@ name: Trendyol fırsat taraması
 
 on:
   schedule:
-    - cron: "17 */2 * * *"   # 2 saatte bir (GitHub birkaç dakika gecikebilir)
+    - cron: "4-59/10 * * * *"   # 10 dakikada bir (GitHub birkaç dakika gecikebilir)
   push:
     paths: ["config.json"]   # ayar sayfasından kaydedince hemen tarar
   workflow_dispatch:
