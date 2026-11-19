@@ -22,7 +22,7 @@
     }
   ],
   "sayfa_sayisi": 10,
-  "indirim_esigi": 30,
+  "indirim_esigi": 10,
   "min_gecmis_gun": 3,
   "gecmis_gun": 30,
   "min_normal_fiyat": 100,
