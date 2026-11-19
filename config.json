@@ -1,0 +1,20 @@
+{
+  "kategoriler": [
+    {
+      "ad": "Elektronik",
+      "url": "https://www.trendyol.com/elektronik?sst=BEST_SELLER",
+      "aktif": true
+    },
+    {
+      "ad": "Ev & Yaşam",
+      "url": "https://www.trendyol.com/ev-ve-yasam?sst=BEST_SELLER",
+      "aktif": true
+    }
+  ],
+  "sayfa_sayisi": 15,
+  "indirim_esigi": 50,
+  "min_gecmis_gun": 3,
+  "gecmis_gun": 30,
+  "min_normal_fiyat": 100,
+  "max_bildirim": 15
+}
