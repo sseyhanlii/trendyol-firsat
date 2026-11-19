@@ -258,7 +258,7 @@ def tara(ayarlar):
                 u["kategori"] = kat.get("ad", yol)
                 tum[u["id"]] = u
             adet += len(urunler)
-            time.sleep(random.uniform(1.5, 3.0))
+            time.sleep(random.uniform(0.5, 1.0))
         log(f"{kat.get('ad', yol)}: {adet} ürün okundu")
     return tum
 
