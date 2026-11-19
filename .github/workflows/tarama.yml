@@ -1,0 +1,51 @@
+name: Trendyol fırsat taraması
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"   # 2 saatte bir (GitHub birkaç dakika gecikebilir)
+  push:
+    paths: ["config.json"]   # ayar sayfasından kaydedince hemen tarar
+  workflow_dispatch:
+    inputs:
+      mod:
+        description: "Ne yapılsın?"
+        type: choice
+        options: [tarama, test]
+        default: tarama
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trendyol-tarama
+  cancel-in-progress: false
+
+jobs:
+  tara:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Gereksinimleri kur
+        run: pip install -r requirements.txt
+
+      - name: Taramayı çalıştır
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python trendyol_firsat.py ${{ inputs.mod == 'test' && '--test' || '' }}
+
+      - name: Fiyat geçmişini kaydet
+        if: ${{ inputs.mod != 'test' }}
+        run: |
+          git config user.name "fiyat-botu"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add veri/ || true
+          git diff --cached --quiet || git commit -m "Fiyat geçmişi güncellendi"
+          git pull --rebase --quiet
+          git push
